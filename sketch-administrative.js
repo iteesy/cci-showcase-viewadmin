@@ -162,7 +162,7 @@ function loadFormFieldImages() {
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    //frameRate(45); // REDUCED from default 60fps
+    frameRate(45); // REDUCED from default 60fps
     
     // Initialize webcam
     capture = createCapture(VIDEO);
@@ -355,9 +355,7 @@ function drawAdministrativeSide() {
     // Draw webcam feed
     if (capture.loadedmetadata) {
         image(capture, 0, 0, windowWidth, windowHeight);
-        
-        // REDUCED blur for performance
-        filter(BLUR, 4); // REDUCED from 8
+        //filter(BLUR, 4); // REDUCED from 8
         
         noTint();
     }
@@ -561,9 +559,3 @@ function drawSkeleton() {
     }
 }
 
-// function keyPressed() {
-//     if (key === 's' || key === 'S') {
-//         showSkeleton = !showSkeleton;
-//         console.log('Skeleton view:', showSkeleton ? 'ON' : 'OFF');
-//     }
-// }
