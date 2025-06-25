@@ -443,6 +443,7 @@ function draw() {
     }
 }
 
+
 function drawIdleScreen() {
     // Deep black background
     background(0);
@@ -481,38 +482,38 @@ function drawIdleScreen() {
     // High contrast white text overlay
     push();
     
-    // Responsive sizing
+    // Responsive sizing - INCREASED for 55" monitor
     let isPortrait = height > width;
     let baseSize = min(width, height);
     
     // Use Kepler fonts for sophisticated typography
     textAlign(CENTER, CENTER);
     
-    // Queue number with digital styling - Light weight
+    // Queue number with digital styling - Light weight - ENLARGED
     textFont('kepler-std-condensed-display', 'light');
     fill(255, 255, 255, 200);
-    textSize(baseSize * 0.045); // Increased from 0.025
+    textSize(baseSize * 0.065); // INCREASED from 0.045
     textStyle(NORMAL);
     let queueText = `>>> PROCESSING APPLICANT #${currentQueueNumber.toString().padStart(3, '0')} <<<`;
-    text(queueText, width/2, height * 0.12);
+    text(queueText, width/2, height * 0.18); // LOWERED from height * 0.12 to give corner text more space
     
     // Add subtle glitch effect to queue number occasionally
     if (frameCount % 180 < 5) {
         fill(255, 0, 0, 100);
-        text(queueText, width/2 + 2, height * 0.12 + 1);
+        text(queueText, width/2 + 2, height * 0.18 + 1); // UPDATED to match new position
     }
     
-    // Main instruction - Medium weight for strong presence
+    // Main instruction - Medium weight for strong presence - ENLARGED
     textFont('kepler-std-condensed-display', 'medium');
     fill(255);
-    textSize(baseSize * 0.08); // Increased from 0.045
-    textStyle(NORMAL); // Remove BOLD since we're using medium weight
+    textSize(baseSize * 0.12); // INCREASED from 0.08
+    textStyle(NORMAL);
     
     let mainY = height * 0.35;
     
     if (isPortrait && width < height * 0.6) {
         text("PLEASE STAND", width/2, mainY);
-        text("IN FRONT OF CAMERA", width/2, mainY + baseSize * 0.1); // Increased spacing
+        text("IN FRONT OF CAMERA", width/2, mainY + baseSize * 0.14); // INCREASED spacing
     } else {
         text(">>> PLEASE STAND IN FRONT OF CAMERA <<<", width/2, mainY);
     }
@@ -523,23 +524,23 @@ function drawIdleScreen() {
     // System status indicators
     drawSystemStatus();
     
-    // Technical instructions - Light weight for subtlety
+    // Technical instructions - Light weight for subtlety - ENLARGED
     textFont('kepler-std-condensed-display', 'light');
     fill(150, 255, 150); // Matrix green
-    textSize(baseSize * 0.035); // Increased from 0.02
+    textSize(baseSize * 0.05); // INCREASED from 0.035
     textStyle(NORMAL);
     textAlign(CENTER, CENTER);
     
     let instructY = height * 0.75;
     text("STAND ON DESIGNATED AREA", width/2, instructY);
-    text("LOOK DIRECTLY INTO CAMERA", width/2, instructY + baseSize * 0.05); // Increased spacing
+    text("LOOK DIRECTLY INTO CAMERA", width/2, instructY + baseSize * 0.07); // INCREASED spacing
     
-    // Blinking system ready indicator - Regular weight for visibility
+    // Blinking system ready indicator - Regular weight for visibility - ENLARGED
     if ((millis() % 1000) < 500) {
         textFont('kepler-std-condensed-display', 'normal');
         fill(0, 255, 0);
-        textSize(baseSize * 0.04); // Increased from 0.025
-        text("● ID PHOTO READY", width/2, instructY + baseSize * 0.12); // Adjusted spacing
+        textSize(baseSize * 0.055); // INCREASED from 0.04
+        text("● ID PHOTO READY", width/2, instructY + baseSize * 0.15); // ADJUSTED spacing
     }
     
     // Corner data readouts
@@ -753,42 +754,46 @@ function drawTechnicalCrosshair() {
 }
 
 function drawSystemStatus() {
-    // System readouts in corners - Light weight for technical data
+    // System readouts in corners - ALL SAME LARGE SIZE for 55" monitor
     textFont('kepler-std-condensed-display', 'light');
     textAlign(LEFT);
-    textSize(12);
+    textSize(32); // INCREASED to match bottom corners - all corners same size now!
     fill(100, 255, 100, 180);
     
-    // Top left - System info
-    text("SYS_STATUS: ACTIVE", 20, 30);
-    text("CAM_RES: 640x480", 20, 50);
-    text("FPS: " + nf(frameRate(), 2, 1), 20, 70);
-    text("TEMP: 67.2°C", 20, 90);
+    // Top left - System info - INCREASED spacing for larger text
+    text("SYS_STATUS: ACTIVE", 30, 55);
+    text("CAM_RES: 640x480", 30, 95);
+    text("FPS: " + nf(frameRate(), 2, 1), 30, 135);
+    text("TEMP: 67.2°C", 30, 175);
     
-    // Top right - Network
+    // Top right - Network - INCREASED spacing for larger text
     textAlign(RIGHT);
-    text("NET: SECURE_LINK", width - 20, 30);
-    text("PING: 12ms", width - 20, 50);
-    text("ENCRYPT: AES-256", width - 20, 70);
-    
-    // Bottom left - Processing
-    textAlign(LEFT);
-    text("ML_MODEL: ACTIVE", 20, height - 60);
-    text("DETECTION: READY", 20, height - 40);
-    text("STORAGE: 78% FREE", 20, height - 20);
+    text("NET: SECURE_LINK", width - 30, 55);
+    text("PING: 12ms", width - 30, 95);
+    text("ENCRYPT: AES-256", width - 30, 135);
 }
 
 function drawCornerReadouts() {
-    // Bottom right - Technical data with Light weight
+    // Bottom corner readouts - ALL SAME LARGE SIZE for 55" monitor visibility
     textFont('kepler-std-condensed-display', 'light');
     textAlign(RIGHT);
-    textSize(10);
+    textSize(32); // INCREASED to match top corners - all corners same size now!
     fill(150, 150, 255, 150);
     
-    text("TIMESTAMP: " + nf(millis(), 8, 0), width - 20, height - 80);
-    text("FRAME: " + nf(frameCount, 6, 0), width - 20, height - 60);
-    text("QUEUE_POS: " + currentQueueNumber, width - 20, height - 40);
-    text("BUILD: v2.1.3-beta", width - 20, height - 20);
+    // Bottom right - Technical data - MUCH MORE spacing for larger text
+    text("TIMESTAMP: " + nf(millis(), 8, 0), width - 30, height - 155);
+    text("FRAME: " + nf(frameCount, 6, 0), width - 30, height - 115);
+    text("QUEUE_POS: " + currentQueueNumber, width - 30, height - 75);
+    text("BUILD: v2.1.3-beta", width - 30, height - 35);
+    
+    // Bottom left - Additional system info - ALL SAME LARGE SIZE
+    textAlign(LEFT);
+    textSize(32); // INCREASED to match top corners - all corners same size now!
+    fill(100, 255, 100, 150);
+    
+    text("ML_MODEL: ACTIVE", 30, height - 115);
+    text("DETECTION: READY", 30, height - 75);
+    text("STORAGE: 78% FREE", 30, height - 35);
 }
 
 function drawAdministrativeSide() {
