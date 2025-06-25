@@ -1,3 +1,22 @@
+// === IKEDA-INSPIRED IDLE SCREEN VARIABLES ===
+let scanlineY = 0;
+let scanlineSpeed = 2;
+let glitchFrames = [];
+let glitchTimer = 0;
+let dataStreamLines = [];
+let binaryDigits = [];
+let whiteNoisePixels = [];
+let interferencePattern = 0;
+let systemFont; // We'll use a monospace system font initially
+
+// Grid and data visualization
+let gridOpacity = 0;
+let gridFadeDirection = 1;
+let dataPoints = [];
+
+// Audio-reactive elements (simulated)
+let frequencyBars = [];
+let spectrumData = [];
 let isIdleState = true;
 let lastPersonDetectedTime = 0;
 let idleTimeout = 3000; // 3 seconds with no person detected = idle state
@@ -122,6 +141,171 @@ let bouncingFields = [];
 
 let showSkeleton = false;
 
+
+function initializeIkedaElements() {
+    // Create data stream lines
+    for (let i = 0; i < 12; i++) {
+        dataStreamLines.push({
+            x: random(width),
+            y: random(height),
+            speed: random(0.5, 3),
+            opacity: random(50, 255),
+            width: random(1, 4)
+        });
+    }
+    
+    // Create binary digit rain
+    for (let i = 0; i < 200; i++) {
+        binaryDigits.push({
+            x: random(width),
+            y: random(-height, 0),
+            speed: random(1, 4),
+            value: random() > 0.5 ? '1' : '0',
+            opacity: random(100, 255),
+            size: random(8, 14)
+        });
+    }
+    
+    // Create white noise pixels
+    for (let i = 0; i < 300; i++) {
+        whiteNoisePixels.push({
+            x: random(width),
+            y: random(height),
+            opacity: random(50, 200),
+            life: random(30, 120)
+        });
+    }
+    
+    // Create frequency visualization data
+    for (let i = 0; i < 64; i++) {
+        frequencyBars.push({
+            height: 0,
+            targetHeight: random(10, 100),
+            x: map(i, 0, 63, 50, width - 50)
+        });
+        spectrumData.push(random(0.1, 1.0));
+    }
+    
+    // Create data visualization points
+    for (let i = 0; i < 50; i++) {
+        dataPoints.push({
+            x: random(width * 0.2, width * 0.8),
+            y: random(height * 0.3, height * 0.7),
+            targetX: random(width * 0.2, width * 0.8),
+            targetY: random(height * 0.3, height * 0.7),
+            size: random(2, 8),
+            opacity: random(100, 255)
+        });
+    }
+}
+
+
+function drawIdleScreen() {
+    // Deep black background
+    background(0);
+    
+    // Update queue number periodically
+    if (millis() - lastQueueUpdate > random(8000, 12000)) {
+        currentQueueNumber += floor(random(1, 4));
+        lastQueueUpdate = millis();
+    }
+    
+    // === IKEDA-STYLE BACKGROUND ELEMENTS ===
+    
+    // 1. White noise layer
+    drawWhiteNoise();
+    
+    // 2. Scanning interference lines
+    drawScanlines();
+    
+    // 3. Binary data rain
+    drawBinaryRain();
+    
+    // 4. Data stream lines
+    drawDataStreams();
+    
+    // 5. Grid interference pattern
+    drawInterferenceGrid();
+    
+    // 6. Frequency visualization
+    drawFrequencySpectrum();
+    
+    // 7. Data point constellation
+    drawDataConstellation();
+    
+    // === MAIN CONTENT OVERLAY ===
+    
+    // High contrast white text overlay
+    push();
+    
+    // Responsive sizing
+    let isPortrait = height > width;
+    let baseSize = min(width, height);
+    
+    // Use Kepler fonts for sophisticated typography
+    textAlign(CENTER, CENTER);
+    
+    // Queue number with digital styling - Light weight
+    textFont('kepler-std-condensed-display', 'light');
+    fill(255, 255, 255, 200);
+    textSize(baseSize * 0.025);
+    textStyle(NORMAL);
+    let queueText = `>>> PROCESSING APPLICANT #${currentQueueNumber.toString().padStart(3, '0')} <<<`;
+    text(queueText, width/2, height * 0.12);
+    
+    // Add subtle glitch effect to queue number occasionally
+    if (frameCount % 180 < 5) {
+        fill(255, 0, 0, 100);
+        text(queueText, width/2 + 2, height * 0.12 + 1);
+    }
+    
+    // Main instruction - Medium weight for strong presence
+    textFont('kepler-std-condensed-display', 'medium');
+    fill(255);
+    textSize(baseSize * 0.045);
+    textStyle(NORMAL); // Remove BOLD since we're using medium weight
+    
+    let mainY = height * 0.35;
+    
+    if (isPortrait && width < height * 0.6) {
+        text("PLEASE STAND", width/2, mainY);
+        text("IN FRONT OF CAMERA", width/2, mainY + baseSize * 0.06);
+    } else {
+        text(">>> PLEASE STAND IN FRONT OF CAMERA <<<", width/2, mainY);
+    }
+    
+    // Technical crosshair with data overlay
+    drawTechnicalCrosshair();
+    
+    // System status indicators
+    drawSystemStatus();
+    
+    // Technical instructions - Light weight for subtlety
+    textFont('kepler-std-condensed-display', 'light');
+    fill(150, 255, 150); // Matrix green
+    textSize(baseSize * 0.02);
+    textStyle(NORMAL);
+    textAlign(CENTER, CENTER);
+    
+    let instructY = height * 0.75;
+    text("STAND ON DESIGNATED AREA", width/2, instructY);
+    text("LOOK DIRECTLY INTO CAMERA", width/2, instructY + baseSize * 0.03);
+    
+    // Blinking system ready indicator - Regular weight for visibility
+    if ((millis() % 1000) < 500) {
+        textFont('kepler-std-condensed-display', 'normal');
+        fill(0, 255, 0);
+        textSize(baseSize * 0.025);
+        text("● ID PHOTO READY", width/2, instructY + baseSize * 0.08);
+    }
+    
+    // Corner data readouts
+    drawCornerReadouts();
+    
+    pop();
+}
+
+
 function preload() {
     // Load BodyPose and FaceMesh
     bodyPose = ml5.bodyPose('MoveNet', {
@@ -179,6 +363,7 @@ function setup() {
     initializeBouncingFields();
     initializeFieldCycling();
     initializeBodyFieldCycling();
+    //initializeIkedaElements();
 }
 
 function resetBouncingFields() {
@@ -280,114 +465,353 @@ function draw() {
 }
 
 function drawIdleScreen() {
-    // Update queue number periodically (every 8-12 seconds)
+    // Deep black background
+    background(0);
+    
+    // Update queue number periodically
     if (millis() - lastQueueUpdate > random(8000, 12000)) {
         currentQueueNumber += floor(random(1, 4));
         lastQueueUpdate = millis();
     }
     
-    // Responsive sizing based on screen dimensions
+    // === IKEDA-STYLE BACKGROUND ELEMENTS ===
+    
+    // 1. White noise layer
+    drawWhiteNoise();
+    
+    // 2. Scanning interference lines
+    drawScanlines();
+    
+    // 3. Binary data rain
+    drawBinaryRain();
+    
+    // 4. Data stream lines
+    drawDataStreams();
+    
+    // 5. Grid interference pattern
+    drawInterferenceGrid();
+    
+    // 6. Frequency visualization
+    drawFrequencySpectrum();
+    
+    // 7. Data point constellation
+    drawDataConstellation();
+    
+    // === MAIN CONTENT OVERLAY ===
+    
+    // High contrast white text overlay
+    push();
+    
+    // Responsive sizing
     let isPortrait = height > width;
     let baseSize = min(width, height);
     
-    // Responsive text sizes
-    let queueTextSize = baseSize * 0.04;
-    let mainTextSize = baseSize * 0.08;
-    let instructionTextSize = baseSize * 0.035;
-    let footerTextSize = baseSize * 0.025;
-    
-    // Responsive positioning
-    let topSpacing = height * 0.15;
-    let centerY = height * 0.42;
-    let bottomSpacing = height * 0.5;
-    
-    // Queue number (H3 equivalent)
-    fill(102, 102, 102);
+    // Use Kepler fonts for sophisticated typography
     textAlign(CENTER, CENTER);
-    textSize(queueTextSize);
-    textFont('Kepler');
-    text(`NOW SERVING: APPLICANT #${currentQueueNumber.toString().padStart(3, '0')}`, 
-         width/2, topSpacing);
     
-    // Main instruction (H1 equivalent)
-    fill(26, 26, 26);
-    textSize(mainTextSize);
-    textStyle(BOLD);
-    
-if (isPortrait && width < height * 0.6) {
-    // Measure text width and scale if needed
-    let line1 = "STAND IN FRONT OF CAMERA";
-    let line2 = "FOR ID PHOTO";
-    
-    textSize(mainTextSize);
-    let line1Width = textWidth(line1);
-    let line2Width = textWidth(line2);
-    let maxWidth = max(line1Width, line2Width);
-    
-    // Scale down if text is too wide (leave some padding)
-    if (maxWidth > width * 0.9) {
-        let scaleFactor = (width * 0.9) / maxWidth;
-        textSize(mainTextSize * scaleFactor);
-    }
-    
-    text(line1, width/2, centerY - mainTextSize * 1.2);
-    text(line2, width/2, centerY - mainTextSize * 0.3);
-} else {
-    // Same approach for landscape
-    let singleLine = "PLEASE STEP HERE FOR ID PHOTO";
-    textSize(baseSize * 0.12);
-    
-    if (textWidth(singleLine) > width * 0.9) {
-        let scaleFactor = (width * 0.9) / textWidth(singleLine);
-        textSize(baseSize * 0.12 * scaleFactor);
-    }
-    
-    text(singleLine, width/2, centerY - baseSize * 0.12);
-}
-    
-    // Crosshair/viewfinder
-    drawCrosshair();
-    
-    // Instructions
-    fill(68, 68, 68);
-    textSize(instructionTextSize);
+    // Queue number with digital styling - Light weight
+    textFont('kepler-std-condensed-display', 'light');
+    fill(255, 255, 255, 200);
+    textSize(baseSize * 0.045); // Increased from 0.025
     textStyle(NORMAL);
+    let queueText = `>>> PROCESSING APPLICANT #${currentQueueNumber.toString().padStart(3, '0')} <<<`;
+    text(queueText, width/2, height * 0.12);
     
-    let instructionY1 = centerY + baseSize * 0.6;
-    let instructionY2 = centerY + baseSize * 0.66;
+    // Add subtle glitch effect to queue number occasionally
+    if (frameCount % 180 < 5) {
+        fill(255, 0, 0, 100);
+        text(queueText, width/2 + 2, height * 0.12 + 1);
+    }
     
-    text("STAND ON DESIGNATED AREA", width/2, instructionY1);
+    // Main instruction - Medium weight for strong presence
+    textFont('kepler-std-condensed-display', 'medium');
+    fill(255);
+    textSize(baseSize * 0.08); // Increased from 0.045
+    textStyle(NORMAL); // Remove BOLD since we're using medium weight
     
-    // Blinking indicator for camera instruction
-    let blinkOn = (millis() % 1500) < 750;
-    let cameraText = "LOOK DIRECTLY INTO CAMERA";
-    text(cameraText, width/2 - instructionTextSize * 0.4, instructionY2);
+    let mainY = height * 0.35;
     
-    if (blinkOn) {
-        fill(255, 68, 68);
-        let dotSize = instructionTextSize * 0.4;
-        ellipse(width/2 + textWidth(cameraText)/2, instructionY2, dotSize, dotSize);
+    if (isPortrait && width < height * 0.6) {
+        text("PLEASE STAND", width/2, mainY);
+        text("IN FRONT OF CAMERA", width/2, mainY + baseSize * 0.1); // Increased spacing
+    } else {
+        text(">>> PLEASE STAND IN FRONT OF CAMERA <<<", width/2, mainY);
+    }
+    
+    // Technical crosshair with data overlay
+    drawTechnicalCrosshair();
+    
+    // System status indicators
+    drawSystemStatus();
+    
+    // Technical instructions - Light weight for subtlety
+    textFont('kepler-std-condensed-display', 'light');
+    fill(150, 255, 150); // Matrix green
+    textSize(baseSize * 0.035); // Increased from 0.02
+    textStyle(NORMAL);
+    textAlign(CENTER, CENTER);
+    
+    let instructY = height * 0.75;
+    text("STAND ON DESIGNATED AREA", width/2, instructY);
+    text("LOOK DIRECTLY INTO CAMERA", width/2, instructY + baseSize * 0.05); // Increased spacing
+    
+    // Blinking system ready indicator - Regular weight for visibility
+    if ((millis() % 1000) < 500) {
+        textFont('kepler-std-condensed-display', 'normal');
+        fill(0, 255, 0);
+        textSize(baseSize * 0.04); // Increased from 0.025
+        text("● ID PHOTO READY", width/2, instructY + baseSize * 0.12); // Adjusted spacing
+    }
+    
+    // Corner data readouts
+    drawCornerReadouts();
+    
+    pop();
+}
+
+
+function drawWhiteNoise() {
+    // Sparse white noise for texture
+    for (let i = 0; i < whiteNoisePixels.length; i++) {
+        let pixel = whiteNoisePixels[i];
+        
+        // Update pixel
+        pixel.life--;
+        if (pixel.life <= 0) {
+            pixel.x = random(width);
+            pixel.y = random(height);
+            pixel.opacity = random(30, 150);
+            pixel.life = random(20, 80);
+        }
+        
+        // Draw pixel
+        stroke(255, pixel.opacity);
+        strokeWeight(1);
+        point(pixel.x, pixel.y);
     }
 }
 
-function drawCrosshair() {
-    if (!crosshairImg) return;
+
+function drawScanlines() {
+    // Horizontal scanning lines
+    scanlineY += scanlineSpeed;
+    if (scanlineY > height + 20) {
+        scanlineY = -20;
+    }
     
+    // Main scanline
+    stroke(255, 80);
+    strokeWeight(2);
+    line(0, scanlineY, width, scanlineY);
+    
+    // Trailing lines
+    for (let i = 1; i < 4; i++) {
+        stroke(255, 80 / (i * 2));
+        strokeWeight(1);
+        line(0, scanlineY - (i * 8), width, scanlineY - (i * 8));
+    }
+    
+    // Occasional glitch lines
+    if (random() < 0.02) {
+        stroke(255, 0, 0, 120);
+        strokeWeight(random(1, 4));
+        line(0, random(height), width, random(height));
+    }
+}
+
+function drawBinaryRain() {
+    // Update and draw falling binary digits
+    for (let digit of binaryDigits) {
+        digit.y += digit.speed;
+        
+        // Reset when off screen
+        if (digit.y > height + 20) {
+            digit.y = random(-50, 0);
+            digit.x = random(width);
+            digit.value = random() > 0.5 ? '1' : '0';
+        }
+        
+        // Draw digit
+        fill(0, 255, 0, digit.opacity * 0.3); // Subtle green
+        textAlign(CENTER);
+        textSize(digit.size);
+        text(digit.value, digit.x, digit.y);
+    }
+}
+
+function drawDataStreams() {
+    // Moving data visualization lines
+    for (let line of dataStreamLines) {
+        line.x += line.speed;
+        if (line.x > width + 50) {
+            line.x = -50;
+            line.y = random(height);
+        }
+        
+        stroke(100, 150, 255, line.opacity * 0.4);
+        strokeWeight(line.width);
+        line(line.x, line.y, line.x + 30, line.y);
+        
+        // Add data points along lines
+        fill(100, 150, 255, line.opacity);
+        noStroke();
+        ellipse(line.x + 15, line.y, 2, 2);
+    }
+}
+
+function drawInterferenceGrid() {
+    // Breathing grid pattern
+    gridOpacity += gridFadeDirection * 2;
+    if (gridOpacity > 40 || gridOpacity < 5) {
+        gridFadeDirection *= -1;
+    }
+    
+    interferencePattern += 0.01;
+    
+    stroke(255, gridOpacity);
+    strokeWeight(0.5);
+    
+    // Vertical lines
+    for (let x = 0; x < width; x += 60) {
+        let offset = sin(interferencePattern + x * 0.01) * 10;
+        line(x + offset, 0, x + offset, height);
+    }
+    
+    // Horizontal lines
+    for (let y = 0; y < height; y += 60) {
+        let offset = cos(interferencePattern + y * 0.01) * 10;
+        line(0, y + offset, width, y + offset);
+    }
+}
+
+function drawFrequencySpectrum() {
+    // Simulated audio spectrum at bottom
+    for (let i = 0; i < frequencyBars.length; i++) {
+        let bar = frequencyBars[i];
+        
+        // Update spectrum data
+        spectrumData[i] += random(-0.1, 0.1);
+        spectrumData[i] = constrain(spectrumData[i], 0.1, 1.0);
+        
+        bar.targetHeight = spectrumData[i] * 60;
+        bar.height = lerp(bar.height, bar.targetHeight, 0.1);
+        
+        // Draw frequency bar
+        stroke(255, 100);
+        strokeWeight(2);
+        line(bar.x, height - 20, bar.x, height - 20 - bar.height);
+    }
+}
+
+function drawDataConstellation() {
+    // Moving data points
+    for (let point of dataPoints) {
+        // Gentle movement toward targets
+        point.x = lerp(point.x, point.targetX, 0.02);
+        point.y = lerp(point.y, point.targetY, 0.02);
+        
+        // New target when close
+        if (dist(point.x, point.y, point.targetX, point.targetY) < 5) {
+            point.targetX = random(width * 0.2, width * 0.8);
+            point.targetY = random(height * 0.3, height * 0.7);
+        }
+        
+        // Draw point
+        fill(255, point.opacity * 0.3);
+        noStroke();
+        ellipse(point.x, point.y, point.size, point.size);
+        
+        // Connect nearby points
+        for (let other of dataPoints) {
+            let d = dist(point.x, point.y, other.x, other.y);
+            if (d < 80 && d > 0) {
+                stroke(255, (80 - d) * 2);
+                strokeWeight(0.5);
+                line(point.x, point.y, other.x, other.y);
+            }
+        }
+    }
+}
+
+function drawTechnicalCrosshair() {
     push();
     translate(width/2, height/2 + height * 0.05);
     
     let baseSize = min(width, height);
-    let crosshairSize = baseSize * 0.25;
+    let crosshairSize = baseSize * 0.15;
     
-    crosshairPulse += 0.02;
-    let pulseScale = 1 + sin(crosshairPulse) * 0.05;
+    // Pulsing effect
+    crosshairPulse += 0.03;
+    let pulseScale = 1 + sin(crosshairPulse) * 0.08;
     scale(pulseScale);
     
-    imageMode(CENTER);
-    image(crosshairImg, 0, 0, crosshairSize, crosshairSize);
-    imageMode(CORNER);
+    // Technical crosshair design
+    stroke(0, 255, 0);
+    strokeWeight(2);
+    noFill();
+    
+    // Outer targeting square
+    rect(-crosshairSize/2, -crosshairSize/2, crosshairSize, crosshairSize);
+    
+    // Corner brackets
+    let cornerSize = 20;
+    // Top left
+    line(-crosshairSize/2, -crosshairSize/2, -crosshairSize/2 + cornerSize, -crosshairSize/2);
+    line(-crosshairSize/2, -crosshairSize/2, -crosshairSize/2, -crosshairSize/2 + cornerSize);
+    // Top right
+    line(crosshairSize/2, -crosshairSize/2, crosshairSize/2 - cornerSize, -crosshairSize/2);
+    line(crosshairSize/2, -crosshairSize/2, crosshairSize/2, -crosshairSize/2 + cornerSize);
+    // Bottom left
+    line(-crosshairSize/2, crosshairSize/2, -crosshairSize/2 + cornerSize, crosshairSize/2);
+    line(-crosshairSize/2, crosshairSize/2, -crosshairSize/2, crosshairSize/2 - cornerSize);
+    // Bottom right
+    line(crosshairSize/2, crosshairSize/2, crosshairSize/2 - cornerSize, crosshairSize/2);
+    line(crosshairSize/2, crosshairSize/2, crosshairSize/2, crosshairSize/2 - cornerSize);
+    
+    strokeWeight(1);
+    line(-15, 0, 15, 0);
+    line(0, -15, 0, 15);
     
     pop();
+}
+
+function drawSystemStatus() {
+    // System readouts in corners - Light weight for technical data
+    textFont('kepler-std-condensed-display', 'light');
+    textAlign(LEFT);
+    textSize(12);
+    fill(100, 255, 100, 180);
+    
+    // Top left - System info
+    text("SYS_STATUS: ACTIVE", 20, 30);
+    text("CAM_RES: 640x480", 20, 50);
+    text("FPS: " + nf(frameRate(), 2, 1), 20, 70);
+    text("TEMP: 67.2°C", 20, 90);
+    
+    // Top right - Network
+    textAlign(RIGHT);
+    text("NET: SECURE_LINK", width - 20, 30);
+    text("PING: 12ms", width - 20, 50);
+    text("ENCRYPT: AES-256", width - 20, 70);
+    
+    // Bottom left - Processing
+    textAlign(LEFT);
+    text("ML_MODEL: ACTIVE", 20, height - 60);
+    text("DETECTION: READY", 20, height - 40);
+    text("STORAGE: 78% FREE", 20, height - 20);
+}
+
+function drawCornerReadouts() {
+    // Bottom right - Technical data with Light weight
+    textFont('kepler-std-condensed-display', 'light');
+    textAlign(RIGHT);
+    textSize(10);
+    fill(150, 150, 255, 150);
+    
+    text("TIMESTAMP: " + nf(millis(), 8, 0), width - 20, height - 80);
+    text("FRAME: " + nf(frameCount, 6, 0), width - 20, height - 60);
+    text("QUEUE_POS: " + currentQueueNumber, width - 20, height - 40);
+    text("BUILD: v2.1.3-beta", width - 20, height - 20);
 }
 
 function drawAdministrativeSide() {
