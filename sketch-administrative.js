@@ -78,6 +78,8 @@ let bodyFieldCycleTimer = 0;
 let bodyFieldCycleSpeed = 1500; // INCREASED from 1000 for performance
 let currentTopBodyFieldIndex = 0;
 
+let bouncingFieldsInitialized = false;
+
 // REDUCED BOUNCING FIELDS - Cut in half for performance
 let bouncingFieldImages = [
     // Core family fields
@@ -179,6 +181,11 @@ function setup() {
     initializeBodyFieldCycling();
 }
 
+function resetBouncingFields() {
+    bouncingFieldsInitialized = false;
+    bouncingFields = [];
+}
+
 function initializeFieldCycling() {
     allFaceFieldsFlat = [];
     
@@ -205,6 +212,12 @@ function initializeBodyFieldCycling() {
 }
 
 function initializeBouncingFields() {
+    // Only initialize once - let them drift freely after that
+    if (bouncingFieldsInitialized) {
+        console.log("Bouncing fields already initialized - letting them drift freely");
+        return;
+    }
+    
     bouncingFields = [];
     
     for (let i = 0; i < bouncingFieldImages.length; i++) {
@@ -212,15 +225,17 @@ function initializeBouncingFields() {
         bouncingFields.push({
             filename: filename,
             x: random(windowWidth * 0.2, windowWidth * 0.8),
-            y: random(windowHeight * 0.15, windowHeight * 0.85),
-            vx: random(-1.5, 1.5), // REDUCED speed for performance
-            vy: random(-1.5, 1.5),
-            minSpeed: 0.3, // REDUCED minimum speed
-            maxSpeed: 1.5  // REDUCED maximum speed
+            y: random(windowHeight * 0.1, windowHeight * 0.85),
+            // SMOOTH BUT NOT SLOW - comfortable viewing speed
+            vx: random(-2.5, 2.5), // Sweet spot between slow and frantic
+            vy: random(-2.5, 2.5),
+            minSpeed: 0.6,         // Gentle but visible movement
+            maxSpeed: 2.5          // Smooth maximum
         });
     }
     
-    console.log(`Initialized ${bouncingFields.length} bouncing fields in organic distribution`);
+    bouncingFieldsInitialized = true;
+    console.log(`Initialized ${bouncingFields.length} bouncing fields with smooth movement - will now drift freely`);
 }
 
 // PERFORMANCE OPTIMIZATION: Limit detection frequency
@@ -290,7 +305,7 @@ function drawIdleScreen() {
     fill(102, 102, 102);
     textAlign(CENTER, CENTER);
     textSize(queueTextSize);
-    textFont('Helvetica');
+    textFont('Kepler');
     text(`NOW SERVING: APPLICANT #${currentQueueNumber.toString().padStart(3, '0')}`, 
          width/2, topSpacing);
     
@@ -299,12 +314,36 @@ function drawIdleScreen() {
     textSize(mainTextSize);
     textStyle(BOLD);
     
-    if (isPortrait && width < height * 0.7) {
-        text("PLEASE STEP HERE", width/2, centerY - mainTextSize * 1.2);
-        text("FOR ID PHOTO", width/2, centerY - mainTextSize * 0.3);
-    } else {
-        text("PLEASE STEP HERE FOR ID PHOTO", width/2, centerY - baseSize * 0.12);
+if (isPortrait && width < height * 0.6) {
+    // Measure text width and scale if needed
+    let line1 = "STAND IN FRONT OF CAMERA";
+    let line2 = "FOR ID PHOTO";
+    
+    textSize(mainTextSize);
+    let line1Width = textWidth(line1);
+    let line2Width = textWidth(line2);
+    let maxWidth = max(line1Width, line2Width);
+    
+    // Scale down if text is too wide (leave some padding)
+    if (maxWidth > width * 0.9) {
+        let scaleFactor = (width * 0.9) / maxWidth;
+        textSize(mainTextSize * scaleFactor);
     }
+    
+    text(line1, width/2, centerY - mainTextSize * 1.2);
+    text(line2, width/2, centerY - mainTextSize * 0.3);
+} else {
+    // Same approach for landscape
+    let singleLine = "PLEASE STEP HERE FOR ID PHOTO";
+    textSize(baseSize * 0.12);
+    
+    if (textWidth(singleLine) > width * 0.9) {
+        let scaleFactor = (width * 0.9) / textWidth(singleLine);
+        textSize(baseSize * 0.12 * scaleFactor);
+    }
+    
+    text(singleLine, width/2, centerY - baseSize * 0.12);
+}
     
     // Crosshair/viewfinder
     drawCrosshair();
@@ -374,7 +413,7 @@ function drawAdministrativeSide() {
 function drawBouncingFields() {
     if (poses.length === 0) return;
 
-    // SLOWER body field cycling for performance
+    // Body field cycling (keep existing logic)
     if (millis() - bodyFieldCycleTimer > bodyFieldCycleSpeed) {
         currentTopBodyFieldIndex = Math.floor(random(allBodyFieldsFlat.length));
         bodyFieldCycleTimer = millis();
@@ -386,9 +425,9 @@ function drawBouncingFields() {
     let bodyBounds = getBodyBounds(pose);
     if (!bodyBounds) return;
     
-    // Update and draw bouncing fields
+    // Update and draw bouncing fields with smooth movement
     for (let field of bouncingFields) {
-        // Update position
+        // Update position (simple, smooth movement)
         field.x += field.vx;
         field.y += field.vy;
         
@@ -405,9 +444,15 @@ function drawBouncingFields() {
             field.y = constrain(field.y, bodyBounds.minY, bodyBounds.maxY - fieldImg.height);
         }
         
-        // Maintain speed
-        if (abs(field.vx) < field.minSpeed) field.vx = field.vx > 0 ? field.minSpeed : -field.minSpeed;
-        if (abs(field.vy) < field.minSpeed) field.vy = field.vy > 0 ? field.minSpeed : -field.minSpeed;
+        // Maintain smooth speed
+        if (abs(field.vx) < field.minSpeed) {
+            field.vx = field.vx > 0 ? field.minSpeed : -field.minSpeed;
+        }
+        if (abs(field.vy) < field.minSpeed) {
+            field.vy = field.vy > 0 ? field.minSpeed : -field.minSpeed;
+        }
+        
+        // Cap maximum speed for smoothness
         field.vx = constrain(field.vx, -field.maxSpeed, field.maxSpeed);
         field.vy = constrain(field.vy, -field.maxSpeed, field.maxSpeed);
         
@@ -430,10 +475,25 @@ function drawBouncingFields() {
 }
 
 function getBodyBounds(pose) {
-    let validKeypoints = pose.keypoints.filter(kp => kp.confidence > 0.3);
-    if (validKeypoints.length === 0) return null;
+    // Define body keypoints (including shoulders for neck area, but excluding face landmarks)
+    let bodyKeypointNames = [
+        'left_shoulder', 'right_shoulder',
+        'left_elbow', 'right_elbow', 
+        'left_wrist', 'right_wrist',
+        'left_hip', 'right_hip',
+        'left_knee', 'right_knee',
+        'left_ankle', 'right_ankle'
+    ];
     
-    let scaledKeypoints = validKeypoints.map(kp => ({
+    // Filter to only body keypoints with good confidence
+    let validBodyKeypoints = pose.keypoints.filter(kp => 
+        bodyKeypointNames.includes(kp.name) && kp.confidence > 0.3
+    );
+    
+    if (validBodyKeypoints.length === 0) return null;
+    
+    // Scale keypoints to canvas size and find bounds
+    let scaledKeypoints = validBodyKeypoints.map(kp => ({
         x: map(kp.x, 0, capture.width, 0, windowWidth),
         y: map(kp.y, 0, capture.height, 0, windowHeight)
     }));
@@ -443,6 +503,20 @@ function getBodyBounds(pose) {
     let minY = Math.min(...scaledKeypoints.map(kp => kp.y)) - 50;
     let maxY = Math.max(...scaledKeypoints.map(kp => kp.y)) + 50;
     
+    // EXTEND UPWARD: Add neck/upper chest area by extending minY upward from shoulders
+    let shoulderKeypoints = validBodyKeypoints.filter(kp => 
+        kp.name === 'left_shoulder' || kp.name === 'right_shoulder'
+    );
+    
+    if (shoulderKeypoints.length > 0) {
+        let shoulderY = Math.min(...shoulderKeypoints.map(kp => 
+            map(kp.y, 0, capture.height, 0, windowHeight)
+        ));
+        // Extend upward by 120px from shoulder line to include neck/upper chest
+        minY = Math.min(minY, shoulderY - 120);
+    }
+    
+    // Ensure bounds stay within canvas
     return {
         minX: Math.max(0, minX),
         maxX: Math.min(windowWidth, maxX),
