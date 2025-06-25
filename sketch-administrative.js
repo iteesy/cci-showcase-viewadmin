@@ -851,7 +851,6 @@ function drawDimGridInterference() {
 }
 
 function drawSimpleProcessing() {
-    // Simple processing text
     if (millis() - lastProcessingUpdate > 3000) {
         lastProcessingUpdate = millis();
     }
@@ -860,47 +859,45 @@ function drawSimpleProcessing() {
     textAlign(LEFT, TOP);
     textSize(18);
     fill('#03FD20'); // BRIGHT NEON GREEN
-    text("SYS STATUS: ACTIVE...", 20, 50);
+    text("SYS STATUS: ACTIVE...", 20, 30); // Changed from 50 to 30 to match right side
     
-    // Repeat APPLICANT ID line until it reaches LOCATION area
     let applicantText = `APPLICANT ID: ${currentApplicantNumber}`;
     textSize(14);
-    let currentY = 75;
+    let currentY = 55; // Adjusted to account for new starting position
     let endY = windowHeight - 60;
     
     while (currentY < endY) {
-        fill('#03FD20'); // BRIGHT NEON GREEN with transparency
+        fill('#03FD20');
         text(applicantText, 20, currentY);
         currentY += 15;
     }
 }
 
 function drawSimpleConfidence() {
-    // Top right confidence scores - right aligned
     let startX = windowWidth - 20;
-    let startY = 30;
+    let startY = 30; // Changed from 30 to 50 to match left side
     
     textFont('kepler-std-condensed-display', 'light');
     textAlign(RIGHT, TOP);
     textSize(16);
     
-    fill('#03FD20'); // BRIGHT NEON GREEN
+    fill('#03FD20');
     text("CLASSIFICATION CONFIDENCE", startX, startY);
     
     textSize(14);
-    fill('#03FD20'); // BRIGHT NEON GREEN
+    fill('#03FD20');
     text(`IDENTITY: ${confidenceScores.identity.toFixed(1)}%`, startX, startY + 20);
     text(`BEHAVIOR: ${confidenceScores.behavior.toFixed(1)}%`, startX, startY + 35);
     text(`THREAT: ${confidenceScores.threat.toFixed(1)}%`, startX, startY + 50);
     text(`COMPLIANCE: ${confidenceScores.compliance.toFixed(1)}%`, startX, startY + 65);
     
-    // Repeat COMPLIANCE line until it reaches Applicant ID area
+    // Continue with the repeating compliance text...
     let complianceText = `COMPLIANCE: ${confidenceScores.compliance.toFixed(1)}%`;
     let currentY = startY + 80;
     let endY = windowHeight - 60;
     
     while (currentY < endY) {
-        fill('#03FD20'); // BRIGHT NEON GREEN
+        fill('#03FD20');
         text(complianceText, startX, currentY);
         currentY += 15;
     }
