@@ -886,50 +886,38 @@ function drawSimpleProcessing() {
     
     textFont('kepler-std-condensed-display', 'light');
     textAlign(LEFT, TOP);
-    textSize(18);
+    textSize(24); // More conservative increase from 18 - still readable but less intensive
     fill('#03FD20'); // BRIGHT NEON GREEN
-    text("SYS STATUS: ACTIVE...", 20, 30); // Changed from 50 to 30 to match right side
+    text("SYS STATUS: ACTIVE...", 30, 55);
     
-    let applicantText = `APPLICANT ID: ${currentApplicantNumber}`;
-    textSize(14);
-    let currentY = 55; // Adjusted to account for new starting position
-    let endY = windowHeight - 60;
+    // MINIMAL repetition for performance
+    textSize(20); // Smaller secondary text
+    text(`APPLICANT ID: ${currentApplicantNumber}`, 30, 85);
+    text("PROCESSING...", 30, 115);
     
-    while (currentY < endY) {
-        fill('#03FD20');
-        text(applicantText, 20, currentY);
-        currentY += 15;
-    }
+    // That's it! Keep it simple for performance
 }
 
 function drawSimpleConfidence() {
-    let startX = windowWidth - 20;
-    let startY = 30; // Changed from 30 to 50 to match left side
+    let startX = windowWidth - 30;
+    let startY = 55;
     
     textFont('kepler-std-condensed-display', 'light');
     textAlign(RIGHT, TOP);
-    textSize(16);
+    textSize(24); // More conservative increase from 16 - still readable but less intensive
     
     fill('#03FD20');
-    text("CLASSIFICATION CONFIDENCE", startX, startY);
+    text("CLASSIFICATION", startX, startY);
     
-    textSize(14);
+    textSize(20); // Smaller data text for performance
     fill('#03FD20');
-    text(`IDENTITY: ${confidenceScores.identity.toFixed(1)}%`, startX, startY + 20);
-    text(`BEHAVIOR: ${confidenceScores.behavior.toFixed(1)}%`, startX, startY + 35);
-    text(`THREAT: ${confidenceScores.threat.toFixed(1)}%`, startX, startY + 50);
-    text(`COMPLIANCE: ${confidenceScores.compliance.toFixed(1)}%`, startX, startY + 65);
+    text(`IDENTITY: ${confidenceScores.identity.toFixed(1)}%`, startX, startY + 35);
+    text(`BEHAVIOR: ${confidenceScores.behavior.toFixed(1)}%`, startX, startY + 65);
+    text(`THREAT: ${confidenceScores.threat.toFixed(1)}%`, startX, startY + 95);
+    text(`COMPLIANCE: ${confidenceScores.compliance.toFixed(1)}%`, startX, startY + 125);
     
-    // Continue with the repeating compliance text...
-    let complianceText = `COMPLIANCE: ${confidenceScores.compliance.toFixed(1)}%`;
-    let currentY = startY + 80;
-    let endY = windowHeight - 60;
-    
-    while (currentY < endY) {
-        fill('#03FD20');
-        text(complianceText, startX, currentY);
-        currentY += 15;
-    }
+    // Just one more line to keep it minimal
+    text("ANALYZING...", startX, startY + 155);
 }
 
 function drawBiometricScanning() {
@@ -1060,19 +1048,19 @@ function drawClassificationConfidence() {
 
 function drawSimpleMetadata() {
     textFont('kepler-std-condensed-display', 'light');
-    textSize(14);
+    textSize(24); // More conservative increase from 14 - still readable but less intensive
     
     // Bottom left
     textAlign(LEFT, BOTTOM);
     fill('#03FD20'); // BRIGHT NEON GREEN
-    text("LOCATION: SAN FRANCISCO, CA", 20, windowHeight - 40);
-    text(`SESSION: ${Math.floor(millis() / 1000)}s`, 20, windowHeight - 20);
+    text("LOCATION: SAN FRANCISCO, CA", 30, windowHeight - 55);
+    text(`SESSION: ${Math.floor(millis() / 1000)}s`, 30, windowHeight - 25);
     
     // Bottom right
     textAlign(RIGHT, BOTTOM);
     fill('#03FD20'); // BRIGHT NEON GREEN
-    text(`APPLICANT ID: ${currentApplicantNumber}`, windowWidth - 20, windowHeight - 40);
-    text("FORM: I-485 (ADJUSTMENT)", windowWidth - 20, windowHeight - 20);
+    text(`APPLICANT ID: ${currentApplicantNumber}`, windowWidth - 30, windowHeight - 55);
+    text("FORM: I-485 (ADJUSTMENT)", windowWidth - 30, windowHeight - 25);
 }
 
 function updateConfidenceScoresFast() {
