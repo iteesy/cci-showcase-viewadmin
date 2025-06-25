@@ -17,6 +17,51 @@ let dataPoints = [];
 // Audio-reactive elements (simulated)
 let frequencyBars = [];
 let spectrumData = [];
+
+// === ADMIN ENHANCEMENT VARIABLES ===
+let gridInterferenceAlpha = 0;
+let gridDirection = 1;
+let gridInterferencePattern = 0;
+
+// Processing indicators
+let processingIndicators = [];
+let lastProcessingUpdate = 0;
+let processingMessages = [
+    "ANALYZING FACIAL STRUCTURE...",
+    "PROCESSING BIOMETRIC DATA...",
+    "VALIDATING IDENTITY MARKERS...",
+    "SCANNING BEHAVIORAL PATTERNS...",
+    "CROSS-REFERENCING DATABASE...",
+    "COMPUTING RISK ASSESSMENT...",
+    "GENERATING PROFILE SUMMARY...",
+    "UPDATING CLASSIFICATION..."
+];
+
+// Biometric scanning simulation
+let scanningCrosshairs = [];
+let scanningActive = false;
+let scanCooldown = 0;
+
+// Classification confidence (fake AI scores)
+let confidenceScores = {
+    identity: 0,
+    behavior: 0,
+    threat: 0,
+    compliance: 0
+};
+let targetConfidence = {
+    identity: 87.3,
+    behavior: 94.1,
+    threat: 12.8,
+    compliance: 91.7
+};
+
+// Current applicant data
+let currentApplicantNumber = 0;
+
+
+let sessionStartTime = 0;
+
 let isIdleState = true;
 let lastPersonDetectedTime = 0;
 let idleTimeout = 3000; // 3 seconds with no person detected = idle state
@@ -141,7 +186,6 @@ let bouncingFields = [];
 
 let showSkeleton = false;
 
-
 function initializeIkedaElements() {
     // Create data stream lines
     for (let i = 0; i < 12; i++) {
@@ -192,119 +236,29 @@ function initializeIkedaElements() {
             x: random(width * 0.2, width * 0.8),
             y: random(height * 0.3, height * 0.7),
             targetX: random(width * 0.2, width * 0.8),
-            targetY: random(height * 0.3, height * 0.7),
+            targetY: random(width * 0.3, height * 0.7),
             size: random(2, 8),
             opacity: random(100, 255)
         });
     }
 }
 
+// Initialize admin enhancement elements
+function initializeAdminEnhancements() {
+    sessionStartTime = millis();
+        currentApplicantNumber = Math.floor(random(100001, 999999));
 
-function drawIdleScreen() {
-    // Deep black background
-    background(0);
+    // Fix the confidence scores initialization
+    confidenceScores = {
+        identity: 87.3,
+        behavior: 94.1, 
+        threat: 12.8,
+        compliance: 91.7
+    };
     
-    // Update queue number periodically
-    if (millis() - lastQueueUpdate > random(8000, 12000)) {
-        currentQueueNumber += floor(random(1, 4));
-        lastQueueUpdate = millis();
-    }
-    
-    // === IKEDA-STYLE BACKGROUND ELEMENTS ===
-    
-    // 1. White noise layer
-    drawWhiteNoise();
-    
-    // 2. Scanning interference lines
-    drawScanlines();
-    
-    // 3. Binary data rain
-    drawBinaryRain();
-    
-    // 4. Data stream lines
-    drawDataStreams();
-    
-    // 5. Grid interference pattern
-    drawInterferenceGrid();
-    
-    // 6. Frequency visualization
-    drawFrequencySpectrum();
-    
-    // 7. Data point constellation
-    drawDataConstellation();
-    
-    // === MAIN CONTENT OVERLAY ===
-    
-    // High contrast white text overlay
-    push();
-    
-    // Responsive sizing
-    let isPortrait = height > width;
-    let baseSize = min(width, height);
-    
-    // Use Kepler fonts for sophisticated typography
-    textAlign(CENTER, CENTER);
-    
-    // Queue number with digital styling - Light weight
-    textFont('kepler-std-condensed-display', 'light');
-    fill(255, 255, 255, 200);
-    textSize(baseSize * 0.025);
-    textStyle(NORMAL);
-    let queueText = `>>> PROCESSING APPLICANT #${currentQueueNumber.toString().padStart(3, '0')} <<<`;
-    text(queueText, width/2, height * 0.12);
-    
-    // Add subtle glitch effect to queue number occasionally
-    if (frameCount % 180 < 5) {
-        fill(255, 0, 0, 100);
-        text(queueText, width/2 + 2, height * 0.12 + 1);
-    }
-    
-    // Main instruction - Medium weight for strong presence
-    textFont('kepler-std-condensed-display', 'medium');
-    fill(255);
-    textSize(baseSize * 0.045);
-    textStyle(NORMAL); // Remove BOLD since we're using medium weight
-    
-    let mainY = height * 0.35;
-    
-    if (isPortrait && width < height * 0.6) {
-        text("PLEASE STAND", width/2, mainY);
-        text("IN FRONT OF CAMERA", width/2, mainY + baseSize * 0.06);
-    } else {
-        text(">>> PLEASE STAND IN FRONT OF CAMERA <<<", width/2, mainY);
-    }
-    
-    // Technical crosshair with data overlay
-    drawTechnicalCrosshair();
-    
-    // System status indicators
-    drawSystemStatus();
-    
-    // Technical instructions - Light weight for subtlety
-    textFont('kepler-std-condensed-display', 'light');
-    fill(150, 255, 150); // Matrix green
-    textSize(baseSize * 0.02);
-    textStyle(NORMAL);
-    textAlign(CENTER, CENTER);
-    
-    let instructY = height * 0.75;
-    text("STAND ON DESIGNATED AREA", width/2, instructY);
-    text("LOOK DIRECTLY INTO CAMERA", width/2, instructY + baseSize * 0.03);
-    
-    // Blinking system ready indicator - Regular weight for visibility
-    if ((millis() % 1000) < 500) {
-        textFont('kepler-std-condensed-display', 'normal');
-        fill(0, 255, 0);
-        textSize(baseSize * 0.025);
-        text("● ID PHOTO READY", width/2, instructY + baseSize * 0.08);
-    }
-    
-    // Corner data readouts
-    drawCornerReadouts();
-    
-    pop();
+    console.log("Admin enhancements initialized");
+    console.log("Confidence scores:", confidenceScores);
 }
-
 
 function preload() {
     // Load BodyPose and FaceMesh
@@ -348,7 +302,7 @@ function loadFormFieldImages() {
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    frameRate(45); // REDUCED from default 60fps
+    frameRate(45);
     
     // Initialize webcam
     capture = createCapture(VIDEO);
@@ -363,7 +317,8 @@ function setup() {
     initializeBouncingFields();
     initializeFieldCycling();
     initializeBodyFieldCycling();
-    //initializeIkedaElements();
+    initializeIkedaElements(); // MAKE SURE THIS IS UNCOMMENTED
+    initializeAdminEnhancements();
 }
 
 function resetBouncingFields() {
@@ -569,7 +524,6 @@ function drawIdleScreen() {
     pop();
 }
 
-
 function drawWhiteNoise() {
     // Sparse white noise for texture
     for (let i = 0; i < whiteNoisePixels.length; i++) {
@@ -590,7 +544,6 @@ function drawWhiteNoise() {
         point(pixel.x, pixel.y);
     }
 }
-
 
 function drawScanlines() {
     // Horizontal scanning lines
@@ -641,21 +594,21 @@ function drawBinaryRain() {
 
 function drawDataStreams() {
     // Moving data visualization lines
-    for (let line of dataStreamLines) {
-        line.x += line.speed;
-        if (line.x > width + 50) {
-            line.x = -50;
-            line.y = random(height);
+    for (let dataLine of dataStreamLines) { // ← CHANGED FROM 'line' TO 'dataLine'
+        dataLine.x += dataLine.speed;
+        if (dataLine.x > width + 50) {
+            dataLine.x = -50;
+            dataLine.y = random(height);
         }
         
-        stroke(100, 150, 255, line.opacity * 0.4);
-        strokeWeight(line.width);
-        line(line.x, line.y, line.x + 30, line.y);
+        stroke(100, 150, 255, dataLine.opacity * 0.4);
+        strokeWeight(dataLine.width);
+        line(dataLine.x, dataLine.y, dataLine.x + 30, dataLine.y); // ← NOW THIS WORKS
         
         // Add data points along lines
-        fill(100, 150, 255, line.opacity);
+        fill(100, 150, 255, dataLine.opacity);
         noStroke();
-        ellipse(line.x + 15, line.y, 2, 2);
+        ellipse(dataLine.x + 15, dataLine.y, 2, 2);
     }
 }
 
@@ -818,10 +771,11 @@ function drawAdministrativeSide() {
     // Draw webcam feed
     if (capture.loadedmetadata) {
         image(capture, 0, 0, windowWidth, windowHeight);
-        //filter(BLUR, 4); // REDUCED from 8
-        
         noTint();
     }
+    
+    // ADD ADMIN ENHANCEMENTS HERE (subtle background elements)
+    drawAdminEnhancements();
     
     // Draw bouncing body fields
     drawBouncingFields();
@@ -833,6 +787,291 @@ function drawAdministrativeSide() {
         drawSkeleton();
     }
 }
+
+// === ADMIN ENHANCEMENT FUNCTIONS ===
+
+function drawAdminEnhancements() {
+    console.log("Drawing admin enhancements"); // DEBUG
+    
+    // 1. Simple grid interference
+    drawSimpleGrid();
+    
+    // 2. Processing indicator (just one for now)
+    drawSimpleProcessing();
+    
+    // 3. Classification confidence (top right)
+    drawSimpleConfidence();
+    
+    // 4. Simple metadata (bottom corners)
+    drawSimpleMetadata();
+}
+
+function drawSimpleGrid() {
+    // Very subtle grid
+    gridInterferenceAlpha += gridDirection * 0.5;
+    if (gridInterferenceAlpha > 10 || gridInterferenceAlpha < 3) {
+        gridDirection *= -1;
+    }
+    
+    stroke(255, gridInterferenceAlpha);
+    strokeWeight(0.5);
+    
+    // Just a few lines
+    for (let x = 100; x < windowWidth; x += 100) {
+        line(x, 0, x, windowHeight);
+    }
+    for (let y = 100; y < windowHeight; y += 100) {
+        line(0, y, windowWidth, y);
+    }
+}
+
+function drawDimGridInterference() {
+    // Very subtle breathing grid
+    gridInterferenceAlpha += gridDirection * 0.3;
+    if (gridInterferenceAlpha > 8 || gridInterferenceAlpha < 2) {
+        gridDirection *= -1;
+    }
+    
+    gridInterferencePattern += 0.005; // Slower than idle screen
+    
+    stroke(255, gridInterferenceAlpha);
+    strokeWeight(0.3);
+    
+    // Sparse vertical lines
+    for (let x = 0; x < windowWidth; x += 80) {
+        let offset = sin(gridInterferencePattern + x * 0.008) * 5;
+        line(x + offset, 0, x + offset, windowHeight);
+    }
+    
+    // Sparse horizontal lines  
+    for (let y = 0; y < windowHeight; y += 80) {
+        let offset = cos(gridInterferencePattern + y * 0.008) * 5;
+        line(0, y + offset, windowWidth, y + offset);
+    }
+}
+
+function drawSimpleProcessing() {
+    // Simple processing text
+    if (millis() - lastProcessingUpdate > 3000) {
+        lastProcessingUpdate = millis();
+    }
+    
+    textFont('kepler-std-condensed-display', 'light');
+    textAlign(LEFT, TOP);
+    textSize(18);
+    fill('#03FD20'); // BRIGHT NEON GREEN
+    text("SYS STATUS: ACTIVE...", 20, 50);
+    
+    // Repeat APPLICANT ID line until it reaches LOCATION area
+    let applicantText = `APPLICANT ID: ${currentApplicantNumber}`;
+    textSize(14);
+    let currentY = 75;
+    let endY = windowHeight - 60;
+    
+    while (currentY < endY) {
+        fill('#03FD20'); // BRIGHT NEON GREEN with transparency
+        text(applicantText, 20, currentY);
+        currentY += 15;
+    }
+}
+
+function drawSimpleConfidence() {
+    // Top right confidence scores - right aligned
+    let startX = windowWidth - 20;
+    let startY = 30;
+    
+    textFont('kepler-std-condensed-display', 'light');
+    textAlign(RIGHT, TOP);
+    textSize(16);
+    
+    fill('#03FD20'); // BRIGHT NEON GREEN
+    text("CLASSIFICATION CONFIDENCE", startX, startY);
+    
+    textSize(14);
+    fill('#03FD20'); // BRIGHT NEON GREEN
+    text(`IDENTITY: ${confidenceScores.identity.toFixed(1)}%`, startX, startY + 20);
+    text(`BEHAVIOR: ${confidenceScores.behavior.toFixed(1)}%`, startX, startY + 35);
+    text(`THREAT: ${confidenceScores.threat.toFixed(1)}%`, startX, startY + 50);
+    text(`COMPLIANCE: ${confidenceScores.compliance.toFixed(1)}%`, startX, startY + 65);
+    
+    // Repeat COMPLIANCE line until it reaches Applicant ID area
+    let complianceText = `COMPLIANCE: ${confidenceScores.compliance.toFixed(1)}%`;
+    let currentY = startY + 80;
+    let endY = windowHeight - 60;
+    
+    while (currentY < endY) {
+        fill('#03FD20'); // BRIGHT NEON GREEN
+        text(complianceText, startX, currentY);
+        currentY += 15;
+    }
+}
+
+function drawBiometricScanning() {
+    // Only scan when person is detected
+    if (poses.length > 0 && faces.length > 0) {
+        scanningActive = true;
+        scanCooldown = millis() + 3000; // Keep active for 3 seconds after detection
+    } else if (millis() > scanCooldown) {
+        scanningActive = false;
+    }
+    
+    if (!scanningActive) return;
+    
+    // Update and draw scanning crosshairs
+    for (let crosshair of scanningCrosshairs) {
+        // Move toward targets
+        crosshair.x = lerp(crosshair.x, crosshair.targetX, 0.03);
+        crosshair.y = lerp(crosshair.y, crosshair.targetY, 0.03);
+        
+        // Set new target when close
+        if (dist(crosshair.x, crosshair.y, crosshair.targetX, crosshair.targetY) < 10) {
+            crosshair.targetX = random(windowWidth * 0.3, windowWidth * 0.7);
+            crosshair.targetY = random(windowHeight * 0.2, windowHeight * 0.8);
+        }
+        
+        // Draw scanning crosshair
+        push();
+        translate(crosshair.x, crosshair.y);
+        
+        stroke(0, 255, 100, crosshair.opacity * 0.7);
+        strokeWeight(1);
+        noFill();
+        
+        // Small crosshair
+        let size = crosshair.size * 0.5;
+        line(-size/2, 0, size/2, 0);
+        line(0, -size/2, 0, size/2);
+        
+        // Corner brackets
+        let bracket = size * 0.3;
+        // Top left
+        line(-size/2, -size/2, -size/2 + bracket, -size/2);
+        line(-size/2, -size/2, -size/2, -size/2 + bracket);
+        // Top right  
+        line(size/2, -size/2, size/2 - bracket, -size/2);
+        line(size/2, -size/2, size/2, -size/2 + bracket);
+        // Bottom left
+        line(-size/2, size/2, -size/2 + bracket, size/2);
+        line(-size/2, size/2, -size/2, size/2 - bracket);
+        // Bottom right
+        line(size/2, size/2, size/2 - bracket, size/2);
+        line(size/2, size/2, size/2, size/2 - bracket);
+        
+        pop();
+    }
+}
+
+function drawProcessingIndicators() {
+    // Update processing messages periodically
+    if (millis() - lastProcessingUpdate > random(2000, 4000)) {
+        processingIndicators = [];
+        
+        // Add 1-2 processing messages
+        let numMessages = random() > 0.3 ? 1 : 2;
+        for (let i = 0; i < numMessages; i++) {
+            processingIndicators.push({
+                message: random(processingMessages),
+                x: random(50, windowWidth * 0.4),
+                y: random(50, 120),
+                opacity: 255,
+                life: random(3000, 5000)
+            });
+        }
+        lastProcessingUpdate = millis();
+    }
+    
+    // Draw and update processing indicators
+    textFont('kepler-std-condensed-display', 'light');
+    textAlign(LEFT, TOP);
+    textSize(16);
+    
+    for (let i = processingIndicators.length - 1; i >= 0; i--) {
+        let indicator = processingIndicators[i];
+        
+        // Fade out over time
+        indicator.life -= 16; // Roughly 60fps
+        indicator.opacity = map(indicator.life, 0, 3000, 0, 200);
+        
+        if (indicator.life <= 0) {
+            processingIndicators.splice(i, 1);
+            continue;
+        }
+        
+        fill(100, 255, 150, indicator.opacity);
+        text(indicator.message, indicator.x, indicator.y);
+    }
+}
+
+function drawClassificationConfidence() {
+    // Top right area
+    let startX = windowWidth - 280;
+    let startY = 30;
+    
+    textFont('kepler-std-condensed-display', 'light');
+    textAlign(LEFT, TOP);
+    textSize(14);
+    
+    fill(150, 200, 255, 180);
+    text("CLASSIFICATION CONFIDENCE", startX, startY);
+    
+    textSize(12);
+    let yOffset = 25;
+    
+    // Draw confidence scores
+    let scores = [
+        { label: "IDENTITY VERIFICATION", key: "identity", color: [100, 150, 255] },
+        { label: "BEHAVIORAL ANALYSIS", key: "behavior", color: [150, 255, 150] },
+        { label: "THREAT ASSESSMENT", key: "threat", color: [255, 150, 100] },
+        { label: "COMPLIANCE RATING", key: "compliance", color: [200, 200, 255] }
+    ];
+    
+    for (let score of scores) {
+        fill(score.color[0], score.color[1], score.color[2], 160);
+        text(`${score.label}: ${confidenceScores[score.key].toFixed(1)}%`, startX, startY + yOffset);
+        yOffset += 18;
+    }
+}
+
+function drawSimpleMetadata() {
+    textFont('kepler-std-condensed-display', 'light');
+    textSize(14);
+    
+    // Bottom left
+    textAlign(LEFT, BOTTOM);
+    fill('#03FD20'); // BRIGHT NEON GREEN
+    text("LOCATION: SAN FRANCISCO, CA", 20, windowHeight - 40);
+    text(`SESSION: ${Math.floor(millis() / 1000)}s`, 20, windowHeight - 20);
+    
+    // Bottom right
+    textAlign(RIGHT, BOTTOM);
+    fill('#03FD20'); // BRIGHT NEON GREEN
+    text(`APPLICANT ID: ${currentApplicantNumber}`, windowWidth - 20, windowHeight - 40);
+    text("FORM: I-485 (ADJUSTMENT)", windowWidth - 20, windowHeight - 20);
+}
+
+function updateConfidenceScores() {
+    // Gradually move confidence scores toward targets with realistic fluctuation
+    for (let key in confidenceScores) {
+        let current = confidenceScores[key];
+        let target = targetConfidence[key];
+        
+        // Move toward target
+        confidenceScores[key] = lerp(current, target, 0.02);
+        
+        // Add small random fluctuation
+        confidenceScores[key] += random(-0.3, 0.3);
+        
+        // Clamp to reasonable range
+        confidenceScores[key] = constrain(confidenceScores[key], 0, 100);
+        
+        // Set new target occasionally
+        if (random() < 0.005) { // 0.5% chance per frame
+            targetConfidence[key] = random(70, 98);
+        }
+    }
+}
+
+// === YOUR EXISTING FORM FIELD FUNCTIONS ===
 
 function drawBouncingFields() {
     if (poses.length === 0) return;
@@ -1056,4 +1295,3 @@ function drawSkeleton() {
         }
     }
 }
-
