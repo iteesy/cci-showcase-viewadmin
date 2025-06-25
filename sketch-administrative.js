@@ -118,6 +118,7 @@ let faceLayeredFields = {
     }
 };
 
+
 // FaceMesh landmark mapping for positioning
 let faceLandmarkMap = {
     "forehead_center": 10,
@@ -185,6 +186,13 @@ let bouncingFieldImages = [
 let bouncingFields = [];
 
 let showSkeleton = false;
+
+// Add these variables at the top with your other variables
+let lastConfidenceUpdate = 0;
+let confidenceUpdateInterval = 500; // Update every 1 second (1000ms)
+
+let lastApplicantUpdate = 0;
+let applicantUpdateInterval = 3000; 
 
 function initializeIkedaElements() {
     // Create data stream lines
@@ -397,9 +405,27 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
 }
 
+function updateApplicantIDGovernment() {
+    if (millis() - lastApplicantUpdate < applicantUpdateInterval) {
+        return;
+    }
+    
+    lastApplicantUpdate = millis();
+    
+    let prefixes = ['USC', 'DHS', 'CBP', 'ICE', 'CIS'];
+    let prefix = random(prefixes);
+    let number = Math.floor(random(100000, 999999));
+    
+    currentApplicantNumber = `${prefix}-${number}`;
+}
+
 function draw() {
     background(240, 240, 250);
     
+    
+    updateConfidenceScoresFast();
+   updateApplicantIDGovernment();
+
     // Check if person is detected
     let personDetected = poses.length > 0 && poses[0].keypoints.some(kp => kp.confidence > 0.3);
     
@@ -411,10 +437,8 @@ function draw() {
     }
     
     if (isIdleState) {
-        // Draw idle screen
         drawIdleScreen();
     } else {
-        // Draw administrative side (no coordinate translation needed in 2D mode)
         drawAdministrativeSide();
     }
 }
@@ -1046,26 +1070,19 @@ function drawSimpleMetadata() {
     text("FORM: I-485 (ADJUSTMENT)", windowWidth - 20, windowHeight - 20);
 }
 
-function updateConfidenceScores() {
-    // Gradually move confidence scores toward targets with realistic fluctuation
-    for (let key in confidenceScores) {
-        let current = confidenceScores[key];
-        let target = targetConfidence[key];
-        
-        // Move toward target
-        confidenceScores[key] = lerp(current, target, 0.02);
-        
-        // Add small random fluctuation
-        confidenceScores[key] += random(-0.3, 0.3);
-        
-        // Clamp to reasonable range
-        confidenceScores[key] = constrain(confidenceScores[key], 0, 100);
-        
-        // Set new target occasionally
-        if (random() < 0.005) { // 0.5% chance per frame
-            targetConfidence[key] = random(70, 98);
-        }
+function updateConfidenceScoresFast() {
+    if (millis() - lastConfidenceUpdate < 500) { // 500ms = 0.5 seconds
+        return;
     }
+    
+    lastConfidenceUpdate = millis();
+    
+    confidenceScores.identity = random(85.0, 98.5);
+    confidenceScores.behavior = random(88.0, 96.7);
+    confidenceScores.threat = random(2.1, 25.8);
+    confidenceScores.compliance = random(87.3, 97.2);
+    
+    console.log('Fast scores updated:', confidenceScores);
 }
 
 // === YOUR EXISTING FORM FIELD FUNCTIONS ===
